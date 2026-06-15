@@ -297,7 +297,10 @@ function rI(l){var b=document.getElementById('ibar');if(!l||!l.length)return;var
     l.forEach(function(d){var el=document.getElementById('iv_'+d.f12);if(el)anim(el,d.f2,2,1200)})}
 
 /* ═══ A-SHARES ═══ */
-var AC=['601939','601398','601288','600941','601988','601857','600519','600938','601138','300750','601628','601088','688981','600036','601318','002594','688256','601899','300308','300502','600900','688041','000333','601328','601658','600028','600030','601166','600000','000858','002714','000568','600309','603259','002475','600585','600276','601688','601211','600050','601012','601668','601888','002304','600690','002352','601066','603501','600809','000002','002230','000725','002049','000001','601225','600887','601601','002142','600031','601100'];
+var AC1=['601939','601398','601288','600941','601988','601857','600519','600938','601138','300750','601628','601088','688981','600036','601318','002594','688256','601899','300308','300502'],
+    AC2=['600900','688041','000333','601328','601658','600028','600030','601166','600000','000858','002714','000568','600309','603259','002475','600585','600276','601688','601211','600050'],
+    AC3=['601012','601668','601888','002304','600690','002352','601066','603501','600809','000002','002230','000725','002049','000001','601225','600887','601601','002142','600031','601100'];
+var AC=AC1.concat(AC2,AC3);
 var _idx=new Set(['000001','000002','000003','000010','000011','000012','000016','000300','000688','000905','399001','399005','399006','399100','399300','399673']);
 var aData=[];
 function fA(){
@@ -305,7 +308,19 @@ function fA(){
     return jp('http://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=80&po=1&np=1&ut=bd1d9ddb04089700cf9c27f6f7426281&fltt=2&invt=2&fid=f20&fs=m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23&fields=f2,f3,f12,f14,f20',12000).then(mapA)
     .catch(function(){return wait(500).then(function(){return jp('http://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=80&po=1&np=1&ut=bd1d9ddb04089700cf9c27f6f7426281&fltt=2&invt=2&fid=f20&fs=m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23&fields=f2,f3,f12,f14,f20',12000).then(mapA)})})
     .catch(function(){var si=AC.map(function(c){return(c.charAt(0)==='6'||c.charAt(0)==='9'?'1.':'0.')+c}).join(',');return jp('http://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&invt=2&fields=f2,f3,f12,f14,f20&secids='+si,12000).then(mapA)})
+    .catch(function(){return tABatch()})
     .then(function(l){aData=l;return l})}
+function tA(codes){return new Promise(function(ok,no){
+    var s=document.createElement('script');s.charset='GBK';var d=false,t=setTimeout(function(){if(!d){d=true;no(new Error('tk'))}},12000);
+    s.onload=function(){if(d)return;d=true;clearTimeout(t);var r=[];codes.forEach(function(c){
+        var pfx=(c.charAt(0)==='6'||c.charAt(0)==='9'?'sh':'sz');
+        var v=window['v_'+pfx+c];if(v){var p=v.split('~');
+        if(p.length>44)r.push({mkt:'A',name:p[1],code:p[2],price:parseFloat(p[3])||0,chg:parseFloat(p[32])||0,cap:(parseFloat(p[44])||0)*1e8,cur:'CNY'});
+        delete window['v_'+pfx+c]}});if(s.parentNode)s.parentNode.removeChild(s);r.length?ok(r):no(new Error('empty'))};
+    s.onerror=function(){if(!d){d=true;clearTimeout(t);no(new Error('err'))}};
+    s.src='http://qt.gtimg.cn/q='+codes.map(function(c){return(c.charAt(0)==='6'||c.charAt(0)==='9'?'sh':'sz')+c}).join(',');document.head.appendChild(s)})}
+function tABatch(){return Promise.all([tA(AC1),tA(AC2).catch(function(){return[]}),tA(AC3).catch(function(){return[]})])
+    .then(function(r){return r[0].concat(r[1]).concat(r[2])})}
 
 /* ═══ HK STOCKS ═══ */
 var HK=['00700','09988','00941','01398','00939','03690','09618','01810','09888','02628','01211','00388','01024','02015','09999','00981','09961','02328','01929','02020','06618','09633','00268','01109','02382','01880','02318','00005','01299','00011','00027','00267','02513','00100'];
