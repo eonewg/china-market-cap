@@ -188,6 +188,44 @@ tbody tr:nth-child(3){background:linear-gradient(90deg,rgba(184,115,51,.03),tran
 .fade-enter{opacity:0;transform:translateY(8px)}
 .fade-active{opacity:1;transform:none;transition:all .35s ease}
 
+/* ═══ STOCK NAME CLICKABLE ═══ */
+.sn{cursor:pointer;transition:color .2s}
+.sn:hover{color:var(--gold);text-decoration:underline;text-underline-offset:3px}
+
+/* ═══ KLINE MODAL ═══ */
+.kl-overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.65);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}
+.kl-overlay.open{opacity:1;pointer-events:auto}
+.kl-modal{width:92vw;max-width:920px;background:var(--card);border:1px solid var(--bd);border-radius:16px;
+    box-shadow:0 20px 80px rgba(0,0,0,.5);position:relative;overflow:hidden;
+    transform:translateY(20px) scale(.97);transition:transform .3s cubic-bezier(.22,1,.36,1)}
+.kl-overlay.open .kl-modal{transform:none}
+.kl-modal::before{content:'';position:absolute;inset:0;border-radius:16px;padding:1px;
+    background:linear-gradient(135deg,rgba(232,168,73,.2),transparent 40%,transparent 60%,rgba(59,130,246,.15));
+    -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.kl-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid var(--bd)}
+.kl-info{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.kl-name{font-size:1.1rem;font-weight:700}
+.kl-code{font-family:'Rajdhani',sans-serif;font-size:.85rem;color:var(--t2)}
+.kl-price{font-family:'Rajdhani',sans-serif;font-size:1.1rem;font-weight:700}
+.kl-chg{font-family:'Rajdhani',sans-serif;font-size:.85rem;font-weight:700;padding:2px 8px;border-radius:6px}
+.kl-close{width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--bd);border-radius:8px;background:transparent;color:var(--t1);
+    font-size:1.1rem;cursor:pointer;transition:all .2s}
+.kl-close:hover{background:rgba(246,70,93,.15);border-color:var(--up);color:var(--up)}
+.kl-toolbar{display:flex;align-items:center;gap:8px;padding:10px 20px}
+.kl-periods{display:flex;gap:4px;padding:3px;background:rgba(255,255,255,.03);border:1px solid var(--bd);border-radius:8px}
+.kl-pbtn{padding:4px 14px;font-family:'Rajdhani',sans-serif;font-size:.78rem;font-weight:700;letter-spacing:1px;
+    border:none;background:transparent;color:var(--t2);border-radius:6px;cursor:pointer;transition:all .2s}
+.kl-pbtn.active{background:rgba(232,168,73,.12);color:var(--gold)}
+.kl-pbtn:hover{color:var(--t1)}
+.kl-chart{padding:0 12px 12px;height:420px}
+.kl-loading{display:flex;align-items:center;justify-content:center;height:420px;color:var(--t2)}
+.kl-err{text-align:center;padding:60px 20px;color:var(--t2);font-size:.9rem}
+@media(max-width:600px){.kl-modal{width:98vw;border-radius:12px}.kl-chart{height:300px}
+    .kl-hdr{padding:12px 14px 10px}.kl-toolbar{padding:8px 14px}}
+
 @media(max-width:900px){html{font-size:12px}.idx-card{min-width:130px;padding:10px 12px}.capt{display:none}
     tbody td,thead th{padding:7px 7px}tbody td:first-child,thead th:first-child{padding-left:10px}}
 @media(max-width:600px){.hdr{padding:12px 0}.brand{font-size:1.1rem;letter-spacing:2px}
@@ -244,6 +282,30 @@ tbody tr:nth-child(3){background:linear-gradient(90deg,rgba(184,115,51,.03),tran
     <div class="ftr"><span>SRC: 东方财富 / 腾讯财经 / ExchangeRate-API · 30s 自动刷新</span><span>仅供研究参考 · 不构成投资建议</span></div>
 </div>
 
+<!-- K-line Modal -->
+<div class="kl-overlay" id="klOverlay">
+<div class="kl-modal">
+    <div class="kl-hdr">
+        <div class="kl-info">
+            <span class="kl-name" id="klName">--</span>
+            <span class="kl-code" id="klCode">--</span>
+            <span class="kl-price" id="klPrice">--</span>
+            <span class="kl-chg" id="klChg">--</span>
+        </div>
+        <button class="kl-close" id="klClose" title="关闭">✕</button>
+    </div>
+    <div class="kl-toolbar">
+        <div class="kl-periods" id="klPeriods">
+            <button class="kl-pbtn active" data-klt="101">日K</button>
+            <button class="kl-pbtn" data-klt="102">周K</button>
+            <button class="kl-pbtn" data-klt="103">月K</button>
+        </div>
+    </div>
+    <div class="kl-chart" id="klChart"><div class="kl-loading"><div class="lds"></div></div></div>
+</div>
+</div>
+
+<script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 <script>
 /* ═══ PARTICLES ═══ */
 (function(){var c=document.getElementById('particles');for(var i=0;i<20;i++){var p=document.createElement('div');p.className='particle';
@@ -467,6 +529,93 @@ window.manualRefresh=function(){load()};
 document.getElementById('curSw').style.display='flex';
 uSt();load();
 setInterval(function(){load();uSt()},REFRESH);
+
+/* ═══ KLINE CHART ═══ */
+var klChart=null,klStock=null,klKlt=101;
+function getSecId(s){
+    if(s.mkt==='A')return(s.code.charAt(0)==='6'||s.code.charAt(0)==='9'?'1.':'0.')+s.code;
+    if(s.mkt==='HK')return'116.'+s.code;
+    return'106.'+s.code}
+function fetchKline(secid,klt){return new Promise(function(ok,no){
+    _jc++;var cb='_jp'+_jc+'_'+Date.now()+'_'+(Math.random()*9999|0);
+    var s=document.createElement('script'),d=false;
+    var t=setTimeout(function(){if(!d){d=true;cl();no(new Error('timeout'))}},15000);
+    function cl(){try{delete window[cb]}catch(e){}if(s.parentNode)s.parentNode.removeChild(s)}
+    window[cb]=function(r){if(d)return;d=true;clearTimeout(t);cl();
+        if(r&&r.data&&r.data.klines&&r.data.klines.length)ok(r.data.klines);else no(new Error('empty'))};
+    s.onerror=function(){if(!d){d=true;clearTimeout(t);cl();no(new Error('err'))}};
+    var url='http://push2his.eastmoney.com/api/qt/stock/kline/get?secid='+secid+
+        '&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57'+
+        '&klt='+klt+'&fqt=1&lmt=120&ut=bd1d9ddb04089700cf9c27f6f7426281';
+    s.src=url+'&cb='+cb;document.head.appendChild(s)})}
+
+function openKline(stock){
+    klStock=stock;klKlt=101;
+    document.getElementById('klName').textContent=stock.name;
+    document.getElementById('klCode').textContent=stock.code;
+    var sym=stock.mkt==='A'?'¥':(stock.mkt==='HK'?'HK$':'$');
+    document.getElementById('klPrice').textContent=sym+(stock.priceOrig||stock.price).toFixed(2);
+    var dir=stock.chg>0?'up':(stock.chg<0?'dn':'ft'),sg=stock.chg>0?'+':'';
+    var chgEl=document.getElementById('klChg');chgEl.textContent=sg+stock.chg.toFixed(2)+'%';
+    chgEl.className='kl-chg '+dir;
+    if(stock.chg>0){chgEl.style.background='var(--up-g)';chgEl.style.color='var(--up)'}
+    else if(stock.chg<0){chgEl.style.background='var(--dn-g)';chgEl.style.color='var(--dn)'}
+    else{chgEl.style.background='rgba(255,255,255,.04)';chgEl.style.color='var(--t2)'}
+    document.querySelectorAll('.kl-pbtn').forEach(function(b){b.classList.toggle('active',b.dataset.klt==='101')});
+    document.getElementById('klChart').innerHTML='<div class="kl-loading"><div class="lds"></div></div>';
+    document.getElementById('klOverlay').classList.add('open');
+    loadKline()}
+
+function loadKline(){
+    if(!klStock)return;
+    var secid=getSecId(klStock);
+    document.getElementById('klChart').innerHTML='<div class="kl-loading"><div class="lds"></div></div>';
+    fetchKline(secid,klKlt).then(function(klines){renderKline(klines)})
+    .catch(function(){document.getElementById('klChart').innerHTML='<div class="kl-err">K 线数据暂不可用</div>'})}
+
+function renderKline(klines){
+    var container=document.getElementById('klChart');container.innerHTML='';
+    if(!window.LightweightCharts){container.innerHTML='<div class="kl-err">图表库加载失败</div>';return}
+    var candle=[],vol=[];
+    klines.forEach(function(line){
+        var p=line.split(','),dt=p[0],o=+p[1],c=+p[2],h=+p[3],l=+p[4],v=+p[5];
+        candle.push({time:dt,open:o,high:h,low:l,close:c});
+        vol.push({time:dt,value:v,color:c>=o?'rgba(246,70,93,.5)':'rgba(14,203,129,.5)'})});
+    var chart=LightweightCharts.createChart(container,{
+        width:container.clientWidth,height:container.clientHeight||400,
+        layout:{background:{type:'solid',color:'transparent'},textColor:'#8892a8',fontFamily:'Rajdhani, sans-serif'},
+        grid:{vertLines:{color:'rgba(255,255,255,.03)'},horzLines:{color:'rgba(255,255,255,.03)'}},
+        crosshair:{mode:0},rightPriceScale:{borderColor:'rgba(255,255,255,.06)'},
+        timeScale:{borderColor:'rgba(255,255,255,.06)',timeVisible:false}});
+    var cs=chart.addCandlestickSeries({
+        upColor:'#f6465d',downColor:'#0ecb81',borderUpColor:'#f6465d',borderDownColor:'#0ecb81',
+        wickUpColor:'#f6465d',wickDownColor:'#0ecb81'});
+    cs.setData(candle);
+    var vs=chart.addHistogramSeries({
+        priceFormat:{type:'volume'},priceScaleId:'vol',
+        color:'rgba(232,168,73,.3)'});
+    vs.priceScale().applyOptions({scaleMargins:{top:.85,bottom:0}});
+    vs.setData(vol);
+    chart.timeScale().fitContent();
+    klChart=chart;
+    new ResizeObserver(function(){chart.applyOptions({width:container.clientWidth,height:container.clientHeight||400})}).observe(container)}
+
+function closeKline(){
+    document.getElementById('klOverlay').classList.remove('open');
+    if(klChart){klChart.remove();klChart=null}klStock=null}
+
+document.getElementById('klClose').addEventListener('click',closeKline);
+document.getElementById('klOverlay').addEventListener('click',function(e){if(e.target===this)closeKline()});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeKline()});
+document.getElementById('klPeriods').addEventListener('click',function(e){
+    var btn=e.target.closest('.kl-pbtn');if(!btn)return;
+    klKlt=+btn.dataset.klt;
+    document.querySelectorAll('.kl-pbtn').forEach(function(b){b.classList.remove('active')});
+    btn.classList.add('active');loadKline()});
+document.getElementById('tb').addEventListener('click',function(e){
+    var sn=e.target.closest('.sn');if(!sn)return;
+    var row=sn.closest('tr'),idx=row?row.rowIndex-1:-1;
+    if(idx<0)return;var d=getViewData();if(d&&d[idx])openKline(d[idx])});
 })();
 </script>
 </body>
